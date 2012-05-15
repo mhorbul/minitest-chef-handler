@@ -15,6 +15,7 @@ module MiniTest
       # @options options [<TrueClass,FalseClass>] verbose
       # @options options [String] test files path
       # @options options [String] output_file_path where test runner
+      # @options options [<TrueClass,FalseClass>] keep_output_file specified in output_file_path
       #   will write the output
       def initialize(options = {})
         @options = options
@@ -31,13 +32,17 @@ module MiniTest
         require_test_suites
         runner = Runner.new(run_status)
 
+        result = 0
+
         if custom_runner?
-          runner._run(miniunit_options)
+          result = runner._run(miniunit_options)
         else
-          runner.run(miniunit_options)
+          result = runner.run(miniunit_options)
         end
 
-        if runner.failures == 0
+        # remove output file if test suite runs without errors unless
+        # keep_output_file is true
+        if result.to_i == 0 && @options[:keep_output_file] != true
           File.unlink(@options[:output_file_path])
         end
       end
