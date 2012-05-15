@@ -10,6 +10,12 @@ require 'minitest-chef-handler/infections'
 module MiniTest
   module Chef
     class Handler < ::Chef::Handler
+      # creates minitest chef-handler instance
+      # @param [Hash] options handler options
+      # @options options [<TrueClass,FalseClass>] verbose
+      # @options options [String] test files path
+      # @options options [String] output_file_path where test runner
+      #   will write the output
       def initialize(options = {})
         @options = options
       end
@@ -18,6 +24,10 @@ module MiniTest
         # do not run tests if chef failed
         return if failed?
 
+        if @options[:output_file_path]
+          MiniTest::Chef::Runner.output = File.new(@options[:output_file_path], "w")
+        end
+
         require_test_suites
         runner = Runner.new(run_status)
 
@@ -25,6 +35,10 @@ module MiniTest
           runner._run(miniunit_options)
         else
           runner.run(miniunit_options)
+        end
+
+        if runner.failures == 0
+          File.unlink(@options[:output_file_path])
         end
       end
 
